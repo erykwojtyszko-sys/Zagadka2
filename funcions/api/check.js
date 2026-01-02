@@ -1,116 +1,112 @@
-export async function onRequestGet(context) {
-  // GET = pokaż aktualną podpowiedź (bez zmiany etapu)
-  return handle(context, "", "");
-}
-
-export async function onRequestPost(context) {
+export async function onRequest(context) {
   const { request } = context;
-  const body = await request.json().catch(() => ({}));
-  const answerRaw = (body.answer ?? "").toString();
-  const token = (body.token ?? "").toString();
-  return handle(context, answerRaw, token);
+
+  // GET: zwróć aktualną podpowiedź (bez zmiany etapu)
+  if (request.method === "GET") {
+    return handle(context, "", "");
+  }
+
+  // POST: sprawdzanie odpowiedzi
+  if (request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const answerRaw = (body.answer ?? "").toString();
+    const token = (body.token ?? "").toString();
+    return handle(context, answerRaw, token);
+  }
+
+  return new Response("Method Not Allowed", { status: 405 });
 }
 
 async function handle(context, answerRaw, token) {
   const { env } = context;
 
-  // === TU WPISUJESZ ZAGADKI I ODPOWIEDZI ===
+  // === TU MASZ ZAGADKI I ODPOWIEDZI ===
   const steps = [
-     {
-    clue: `Na tym opiera się zagadka
+    {
+      clue: `Na tym opiera się zagadka
 I każdy ma swoją
 To koncept nie byle łatka
 Niektórzy się jej boją`,
-    answer: "tajemnica",
-  },
-
-  // 2
-  {
-    clue: `Bardzo dobrze,
+      answer: "tajemnica",
+    },
+    {
+      clue: `Bardzo dobrze,
 Początek przykrótki jak pewna osoba
 Nikt nie zobaczy bo prędko się schowa
 Mleko popsuje, w ogródku postoi
 Michała ktoś od tej postaci zgnoji`,
-    answer: "krasnal",
-  },
-
-  // 3
-  {
-    clue: `XD
+      answer: "krasnal",
+    },
+    {
+      clue: `XD
 Będzie przy tobie gdy czas się zatrzyma
 Będzie też gdy nikt inny nie wytrzyma
 Pomaga wymyślić najróżniejsze pomysły
-Bez niej w szarym świecie stracilibyśmy zmysły
+Bez niej w szarym świecie stracilibysmy zmysły
 Dzieci na codzień się nią chwalą 
 A starzy z jej braku często się żalą`,
-    answer: "wyobraźnia",
-  },
-
-  // 4
-  {
-    clue: `Pzdr
+      answer: "wyobraźnia",
+    },
+    {
+      clue: `Pzdr
 Trzeba inaczej na to spojrzeć
 Rzucić koncept lepiej dojrzeć
 Ewidętnie będzie to dla was progiem
 Środek znaleźć? a może bokiem?
 Ćma do światła, rzuć na to okiem`,
-    answer: "Treść",
-  },
-
-  // 5
-  {
-    clue: `Jeśli to ogarnałeś sam, goated:
+      answer: "treść",
+    },
+    {
+      clue: `Jeśli to ogarnałeś sam, goated:
 Trochę prościej, czasem kzywo
 Czasem bez mycia pachnie rybą`,
-    answer: "Siusiak",
-  },
-
-  // 6
-  {
-    clue: `idziesz jak przez błoto
+      answer: "siusiak",
+    },
+    {
+      clue: `idziesz jak przez błoto
 ,jacyś głupcy się nabierali
 bo zamiast złota to sprzedawali
 wmawiają że przynosi wszystkim bogactwa
 a kiedyś jego fałszywość niszczyła hrabstwa`,
-    answer: "Piryt",
-  },
-
-  // 7
-  {
-    clue: `Nad głową wisi, choć nie ma haka
+      answer: "piryt",
+    },
+    {
+      clue: `Nad głową wisi, choć nie ma haka
 Czasem jak wata, czasem jak szmata
 Z deszczem przychodzi lub znika w sekundę
 Zmienia kształt, formę i swoją rundę
 Dzieci w niej widzą smoki i góry
 A informatyk trzyma tam… dane z natury`,
-    answer: "Chmura",
-  },
-
-  // 8
-  {
-    clue: `Więc?
+      answer: "chmura",
+    },
+    {
+      clue: `Więc?
 Dlaczego to wysztko robiłem?
 W tym VS się kodem bawiłem
 Zajżyj mi do głowy, zobacz odpowiedź
 Domyśl się co ma na celu ta spowiedź
 Dla niektórych prostę, dla innych nię
 I tak odpowiedź zaskoczy cię`,
-    answer: "Nuda",
-  },
-];
+      answer: "nuda",
+    },
+  ];
   // ============================
 
   const SECRET = env.TOKEN_SECRET;
   if (!SECRET) return json({ error: "Brak TOKEN_SECRET po stronie serwera." }, 500);
 
+  // Normalizacja: spacje, wielkość liter, polskie znaki
   const normalize = (s) =>
-    s.trim().toLowerCase()
-      .normalize("NFD").replace(/\p{Diacritic}/gu, ""); // usuwa polskie znaki
+    s.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 
   const enc = new TextEncoder();
+
+  // base64url (dla podpisu)
   const b64u = (buf) =>
     btoa(String.fromCharCode(...new Uint8Array(buf)))
-      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
 
   const fromB64u = (str) => {
     str = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -147,6 +143,7 @@ I tak odpowiedź zaskoczy cię`,
     const exp = new Uint8Array(expected);
     if (got.length !== exp.length) return 0;
 
+    // stałoczasowe porównanie
     let diff = 0;
     for (let i = 0; i < got.length; i++) diff |= got[i] ^ exp[i];
     if (diff !== 0) return 0;
