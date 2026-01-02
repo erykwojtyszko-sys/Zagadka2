@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zagadka</title>
+
+  <style>
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .card {
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      margin-top: 16px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    input, button {
+      font-size: 16px;
+      padding: 10px;
+    }
+
+    input {
+      flex: 1;
+    }
+
+    .err {
+      color: #b00020;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .ok {
+      color: #0a7a2f;
+      margin-top: 10px;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Zagadka</h1>
+
+  <div class="card">
+    <p><strong>Podpowiedź:</strong></p>
+    <pre id="clue">Ładuję…</pre>
+  </div>
+
+  <div class="card">
+    <p>Wpisz odpowiedź:</p>
+    <div class="row">
+      <input id="ans" placeholder="Twoja odpowiedź" autocomplete="off" />
+      <button id="btn">Sprawdź</button>
+    </div>
+    <div id="msg" class="err"></div>
+    <div id="msgok" class="ok"></div>
+  </div>
+
+<script>
+  const clueEl = document.getElementById("clue");
+  const ansEl  = document.getElementById("ans");
+  const msgEl  = document.getElementById("msg");
+  const okEl   = document.getElementById("msgok");
+  const btn    = document.getElementById("btn");
+
+  let token = localStorage.getItem("progressToken") || "";
+
+  async function callCheck(answer) {
+    msgEl.textContent = "";
+    okEl.textContent = "";
+
+    let res;
+    try {
+      res = await fetch("/api/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer, token })
+      });
+    } catch (e) {
+      msgEl.textContent = "❌ Nie można połączyć się z serwerem (/api/check).";
+      return;
+    }
+
+    const text = await res.text();
+    let data = null;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      msgEl.textContent =
+        "❌ Serwer nie zwrócił JSON.\n\nOdpowiedź:\n" +
+        text.slice(0, 300);
+      return;
+    }
+
+    if (!res.ok) {
+      msgEl.textContent = data.error || ("❌ Błąd serwera: " + res.status);
+      if (data.clue) clueEl.textContent = data.clue;
+      return;
+    }
+
+    clueEl.textContent = data.clue || "(brak podpowiedzi)";
+    token = data.token || "";
+    localStorage.setItem("progressToken", token);
+
+    okEl.textContent = data.done
+      ? "🎉 Gratulacje! To koniec zagadki."
+      : "✅ Dobra odpowiedź — kolejny etap.";
+
+    ansEl.value = "";
+    ansEl.focus();
+  }
+
+  // start — pobierz pierwszą podpowiedź
+  callCheck("");
+
+  btn.addEventListener("click", () => callCheck(ansEl.value));
+  ansEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") callCheck(ansEl.value);
+  });
+</script>
+
+</body>
+</html>
