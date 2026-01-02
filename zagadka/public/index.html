@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zagadka</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    .card { padding: 16px; border: 1px solid #ddd; border-radius: 12px; margin-top: 16px; }
+    input, button { font-size: 16px; padding: 10px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .err { color: #b00020; margin-top: 10px; }
+    .ok { color: #0a7a2f; margin-top: 10px; }
+    pre { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Zagadka</h1>
+
+  <div class="card">
+    <p><strong>Podpowiedź:</strong></p>
+    <pre id="clue">Ładuję…</pre>
+  </div>
+
+  <div class="card">
+    <p>Wpisz odpowiedź:</p>
+    <div class="row">
+      <input id="ans" placeholder="Twoja odpowiedź" />
+      <button id="btn">Sprawdź</button>
+    </div>
+    <div id="msg" class="err"></div>
+    <div id="msgok" class="ok"></div>
+  </div>
+
+  <script>
+    const clueEl = document.getElementById("clue");
+    const ansEl = document.getElementById("ans");
+    const msgEl = document.getElementById("msg");
+    const okEl = document.getElementById("msgok");
+    const btn = document.getElementById("btn");
+
+    // token postępu (podpisany przez serwer). Trzymamy w localStorage.
+    let token = localStorage.getItem("progressToken") || "";
+
+    async function callCheck(answer) {
+      msgEl.textContent = "";
+      okEl.textContent = "";
+
+      const res = await fetch("/api/check", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ answer, token })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        msgEl.textContent = data.error || "Błąd";
+        return;
+      }
+
+      // aktualizuj podpowiedź i token
+      clueEl.textContent = data.clue;
+      token = data.token || "";
+      localStorage.setItem("progressToken", token);
+
+      okEl.textContent = data.done ? "Koniec! 🎉" : "Dobrze — kolejny etap.";
+      ansEl.value = "";
+      ansEl.focus();
+    }
+
+    // Na start poproś serwer o aktualną podpowiedź (bez odpowiedzi)
+    callCheck("");
+
+    btn.addEventListener("click", () => callCheck(ansEl.value));
+    ansEl.addEventListener("keydown", (e) => { if (e.key === "Enter") callCheck(ansEl.value); });
+  </script>
+</body>
+</html>
