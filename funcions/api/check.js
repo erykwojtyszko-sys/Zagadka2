@@ -1,15 +1,22 @@
-// Cloudflare Pages Functions
+export async function onRequestGet(context) {
+  // GET = pokaż aktualną podpowiedź (bez zmiany etapu)
+  return handle(context, "", "");
+}
+
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request } = context;
   const body = await request.json().catch(() => ({}));
   const answerRaw = (body.answer ?? "").toString();
   const token = (body.token ?? "").toString();
+  return handle(context, answerRaw, token);
+}
 
-  // 1) Zdefiniuj etapy: odpowiedź -> clue
-  // Odpowiedzi normalizujemy: trim + lower + bez polskich znaków (opcjonalnie)
+async function handle(context, answerRaw, token) {
+  const { env } = context;
+
+  // === TU WPISUJESZ ZAGADKI I ODPOWIEDZI ===
   const steps = [
-  // 1
-  {
+     {
     clue: `Na tym opiera się zagadka
 I każdy ma swoją
 To koncept nie byle łatka
@@ -91,15 +98,14 @@ I tak odpowiedź zaskoczy cię`,
     answer: "Nuda",
   },
 ];
+  // ============================
 
-  // 2) Sekret do podpisu tokenu (ustawisz w panelu)
   const SECRET = env.TOKEN_SECRET;
   if (!SECRET) return json({ error: "Brak TOKEN_SECRET po stronie serwera." }, 500);
 
-  // Helpers
   const normalize = (s) =>
     s.trim().toLowerCase()
-      .normalize("NFD").replace(/\p{Diacritic}/gu, ""); // usuń polskie znaki
+      .normalize("NFD").replace(/\p{Diacritic}/gu, ""); // usuwa polskie znaki
 
   const enc = new TextEncoder();
   const b64u = (buf) =>
@@ -134,14 +140,13 @@ I tak odpowiedź zaskoczy cię`,
   }
 
   async function readToken(tok) {
-    if (!tok || !tok.includes(".")) return 0; // start
+    if (!tok || !tok.includes(".")) return 0;
     const [payloadB64, sigB64] = tok.split(".");
     const expected = await hmacSign(payloadB64);
     const got = fromB64u(sigB64);
     const exp = new Uint8Array(expected);
     if (got.length !== exp.length) return 0;
 
-    // stałoczasowe porównanie
     let diff = 0;
     for (let i = 0; i < got.length; i++) diff |= got[i] ^ exp[i];
     if (diff !== 0) return 0;
@@ -154,25 +159,22 @@ I tak odpowiedź zaskoczy cię`,
 
   const currentIndex = await readToken(token);
 
-  // Jeśli to “pusty” request (answer="") -> tylko zwróć aktualną clue
+  // Jeśli pusto → zwróć aktualną clue
   if (!normalize(answerRaw)) {
     const clue = steps[Math.min(currentIndex, steps.length - 1)].clue;
     const newToken = await makeToken(currentIndex);
     return json({ clue, token: newToken, done: currentIndex >= steps.length - 1 });
   }
 
-  // Sprawdź odpowiedź dla bieżącego etapu
   const expected = steps[currentIndex]?.answer;
   if (expected == null) return json({ error: "Nieznany etap." }, 400);
 
   if (normalize(answerRaw) !== normalize(expected)) {
-    // zwróć tę samą podpowiedź i nie zmieniaj etapu
     const clue = steps[currentIndex].clue;
     const sameToken = await makeToken(currentIndex);
     return json({ error: "Zła odpowiedź.", clue, token: sameToken }, 401);
   }
 
-  // Dobra odpowiedź -> przejdź do następnego etapu
   const nextIndex = Math.min(currentIndex + 1, steps.length - 1);
   const clue = steps[nextIndex].clue;
   const newToken = await makeToken(nextIndex);
