@@ -23,7 +23,8 @@ async function handle(context, answerRaw, token) {
   // === TU MASZ ZAGADKI I ODPOWIEDZI ===
   const steps = [
     {
-      clue: `Na tym opiera się zagadka
+      clue: `Wszystkie odpowiedzi to jedno słowo :)
+Na tym opiera się zagadka
 I każdy ma swoją
 To koncept nie byle łatka
 Niektórzy się jej boją`,
@@ -58,7 +59,7 @@ Ewidętnie będzie to dla was progiem
     },
     {
       clue: `Jeśli to ogarnałeś sam, goated:
-Trochę prościej, czasem kzywo
+Trochę prościej, czasem kszywo
 Czasem bez mycia pachnie rybą
 Możesz z niego wystrzelić ślepaka
 Nieodłączna część każdego chłopaka`,
@@ -189,4 +190,5 @@ function json(obj, status = 200) {
   });
 
 }
+
 
