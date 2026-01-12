@@ -48,7 +48,7 @@ A starzy z jej braku często się żalą`,
       answer: "wyobraźnia",
     },
     {
-      clue: `Pzdr
+      clue: `
 Trzeba inaczej na to spojrzeć
 Rzucić koncept lepiej dojrzeć
 Ewidętnie będzie to dla was progiem
@@ -185,4 +185,5 @@ function json(obj, status = 200) {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8" },
   });
+
 }
