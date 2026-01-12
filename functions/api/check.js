@@ -34,7 +34,7 @@ Niektórzy się jej boją`,
 Początek przykrótki jak pewna osoba
 Nikt nie zobaczy bo prędko się schowa
 Mleko popsuje, w ogródku postoi
-Michała ktoś od tej postaci zgnoji`,
+Niskiego ktoś od tej postaci zgnoji`,
       answer: "krasnal",
     },
     {
@@ -59,15 +59,17 @@ Ewidętnie będzie to dla was progiem
     {
       clue: `Jeśli to ogarnałeś sam, goated:
 Trochę prościej, czasem kzywo
-Czasem bez mycia pachnie rybą`,
+Czasem bez mycia pachnie rybą
+Możesz z niego wystrzelić ślepaka
+Nieodłączna część każdego chłopaka`,
       answer: "siusiak",
     },
     {
-      clue: `idziesz jak przez błoto
-,jacyś głupcy się nabierali
-bo zamiast złota to sprzedawali
-wmawiają że przynosi wszystkim bogactwa
-a kiedyś jego fałszywość niszczyła hrabstwa`,
+      clue: `Idziesz jak przez błoto.
+Jacyś głupcy się nabierali
+Bo zamiast złota to sprzedawali
+Wmawiają że przynosi wszystkim bogactwa
+A kiedyś jego fałszywość niszczyła hrabstwa`,
       answer: "piryt",
     },
     {
@@ -187,3 +189,4 @@ function json(obj, status = 200) {
   });
 
 }
+
