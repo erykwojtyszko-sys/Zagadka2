@@ -123,8 +123,8 @@
     localStorage.setItem("progressToken", token);
 
     okEl.textContent = data.done
-      ? "🎉 Gratulacje! To koniec zagadki."
-      : "✅ Dobra odpowiedź — kolejny etap.";
+      ? ""
+      : "";
 
     ansEl.value = "";
     ansEl.focus();
@@ -140,4 +140,5 @@
 </script>
 
 </body>
+
 </html>
