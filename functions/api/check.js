@@ -85,7 +85,7 @@ A informatyk trzyma tam… dane z natury`,
     {
       clue: `Więc?
 Dlaczego to wysztko robiłem?
-W tym VS się kodem bawiłem
+W tym VSC się kodem bawiłem
 Zajżyj mi do głowy, zobacz odpowiedź
 Domyśl się co ma na celu ta spowiedź
 Dla niektórych prostę, dla innych nię
@@ -190,5 +190,6 @@ function json(obj, status = 200) {
   });
 
 }
+
 
 
